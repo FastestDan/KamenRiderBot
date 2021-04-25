@@ -1,3 +1,6 @@
+# Created by X-Corporation
+
+
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import random
@@ -20,29 +23,33 @@ def main():
             print('Новое сообщение:')
             print('Для меня от:', event.obj.message['from_id'])
             print('Текст:', event.obj.message['text'])
-            a = vk.docs.save(file="251102317|204132804|-1|536132|4c843b3731|gif|22610769|Mighty Lvl 2.gif|67696808d638acdee6c4d14498b20217|f668aadde2a051a99f6c79d1dacd11ef|m_4c843b3731|247|m:130x74,s:100x57,x:604x342,y:807x456,o:640x362|eyJkaXNrIjoiMiJ9")
-            print(a['doc']['owner_id'], a['doc']['id'])
             a = event.obj.message['text']
-            if a == 'Kamen Rider':
-                vk.messages.send(user_id=event.obj.message['from_id'],
-                                 message="Henshin!",
-                                 random_id=random.randint(0, 2 ** 64))
-            elif '<' in a and '-' in a:
+            if '<' in a and '-' in a:
                 b = a.split('-')
-                check = cur.execute("""SELECT id FROM Riders WHERE Command LIKE ?""", (b[1],)).fetchall()[0][0]
-                if check >= 21 or check <= 24:
+                try:
+                    check = cur.execute("""SELECT id FROM Riders WHERE Command LIKE ?""", (b[1],)).fetchall()[0][0]
+                except Exception:
+                    check = 0
+                if check == 0:
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message=f'Ой, похоже ты ввёл неверную команду. :('
+                                             f'\nМожет быть, ты попробуешь ещё раз?',
+                                     random_id=random.randint(0, 2 ** 64))
+                elif 199 >= check >= 191:
                     rider = cur.execute("""SELECT Henshin FROM Build WHERE key LIKE ? AND FullComm LIKE ?""",
-                                       (b[1], a)).fetchall()[0][0]
+                                        (b[1], a)).fetchall()[0][0]
                     henshin = cur.execute("""SELECT Pose FROM Build WHERE key LIKE ? AND FullComm LIKE ?""",
                                           (b[1], a)).fetchall()[0][0]
                 vk.messages.send(user_id=event.obj.message['from_id'],
                                  message=rider,
-                                 random_id=random.randint(0, 2 **64),
+                                 random_id=random.randint(0, 2 ** 64),
                                  attachment=f"doc-204132804_{henshin}")
-            elif 'Привет' in a or 'привет' in a or 'Хай' in a or 'Охайо' in a:
-                vk.messages.send(user_id=event.obj.message['from_id'],
-                                 message='Хай-хай~!',
-                                 random_id=random.randint(0, 2 ** 64))
+            elif 'Кари' in a:
+                if 'Привет' in a or 'привет' in a or 'Хай' in a or 'Охайо' in a:
+                    c = random.choice(['Хай-хай!~', 'Привет!', 'Ohayo!', 'Хелло!'])
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message=f'{c}',
+                                     random_id=random.randint(0, 2 ** 64))
             else:
                 vk.messages.send(user_id=event.obj.message['from_id'],
                                  message="Gomennasai, но я тебя не понял :(\nСкажи что-нибудь другое.",
