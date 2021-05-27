@@ -1,10 +1,10 @@
-# Created by X-Corporation
+# This bot was created by X-Corporation in cooperation with CHAOS Industries.
 
 
 TODO = [111, 112, 113, 114, 115, 116, 117, 118, 119, 121, 122, 123, 124, 125, 126, 127, 128, 129, 131, 132, 133,
         134, 135, 136, 137, 138, 139, 141, 142, 143, 144, 145, 146, 147, 148, 149, 151, 152, 153, 154, 155, 156,
-        157, 158, 159, 161, 162, 163, 164, 165, 166, 167, 168, 169, 171, 172, 173, 174, 175, 176, 177, 178, 179]
-
+        157, 158, 159, 161, 162, 163, 164, 165, 166, 167, 168, 169]
+COUNT = 0
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import random
@@ -12,7 +12,7 @@ import sqlite3
 
 
 def main():
-    global TODO
+    global TODO, COUNT
     print('KRB Power On')
     krdb = sqlite3.connect('data/KamenRiderDataBase.sqlite')
     cur = krdb.cursor()
@@ -39,8 +39,8 @@ def main():
                                          f'любимых героев из сериала Kamen Rider. Если хочешь узнать список моих '
                                          f'комманд, напиши "/help".',
                                  random_id=random.randint(0, 2 ** 64))
-            elif '<' in a and '-' in a:
-                b = a.split('-')
+            elif '<' in a and ',' in a:
+                b = a.split(',')
                 try:
                     check = cur.execute("""SELECT id FROM Riders WHERE Command LIKE ?""", (b[1],)).fetchall()[0][0]
                 except Exception:
@@ -55,7 +55,7 @@ def main():
                                              f'введя команду /help.',
                                      random_id=random.randint(0, 2 ** 64))
                     lock = True
-                elif 179 >= check >= 111:
+                elif check in TODO:
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message=f'Извиняй, но такого Райдера у меня пока нет :(\n'
                                              f'Не расстраивайся, уверен, в следующем обновлении'
@@ -141,6 +141,14 @@ def main():
                                               (b[1], a)).fetchall()[0][0]
                     except Exception:
                         henshin = 0
+                elif 179 >= check >= 171:
+                    rider = cur.execute("""SELECT Henshin FROM Ghost WHERE key LIKE ? AND FullComm LIKE ?""",
+                                        (b[1], a)).fetchall()[0][0]
+                    try:
+                        henshin = cur.execute("""SELECT Pose FROM Ghost WHERE key LIKE ? AND FullComm LIKE ?""",
+                                              (b[1], a)).fetchall()[0][0]
+                    except Exception:
+                        henshin = 0
                 elif 189 >= check >= 181:
                     rider = cur.execute("""SELECT Henshin FROM ExAid WHERE key LIKE ? AND FullComm LIKE ?""",
                                         (b[1], a)).fetchall()[0][0]
@@ -203,10 +211,10 @@ def main():
                 b = a.split('-')
                 if len(b) == 1:
                     vk.messages.send(user_id=event.obj.message['from_id'],
-                                     message=f'Для получения базовой формы райдера введи "<kr-Ключ райдера".'
-                                             f'Для получения финальной формы - "<final-Ключ райдера".'
+                                     message=f'Для получения базовой формы райдера введи "<kr,Ключ райдера".'
+                                             f'Для получения финальной формы - "<final,Ключ райдера".'
                                              f'Для любой другой формы нужно написать '
-                                             f'"<form-Ключ райдера-Ключ формы."',
+                                             f'"<form,Ключ райдера,Ключ формы."',
                                      random_id=random.randint(0, 2 ** 64))
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message=f'Имена рабочих райдеров (на данный момент):',
@@ -223,7 +231,7 @@ def main():
                                      message=line,
                                      random_id=random.randint(0, 2 ** 64))
                     vk.messages.send(user_id=event.obj.message['from_id'],
-                                     message=f'Для справки по каждому Райдеру введи "/help-Имя райдера":',
+                                     message=f'Для справки по каждому Райдеру введи "/help,Имя райдера":',
                                      random_id=random.randint(0, 2 ** 64))
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message=f'Также со мной можно сыграть в игру. Для этого напиши '
@@ -285,7 +293,12 @@ def main():
                                      random_id=random.randint(0, 2 ** 64))
             else:
                 if play:
-                    playtrash.append(event.obj.message)
+                    if COUNT != 0:
+                        playtrash.append(event.obj.message)
+                        COUNT -= 1
+                    if COUNT == 0:
+                        playtrash.clear()
+                        play = False
                 else:
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message="Gomennasai, но я тебя не понял :(\nСкажи что-нибудь другое.",
@@ -293,6 +306,7 @@ def main():
 
 
 def playtime(id):
+    global COUNT
     krdb = sqlite3.connect('data/KamenRiderDataBase.sqlite')
     cur = krdb.cursor()
     vk_session = vk_api.VkApi(
@@ -396,7 +410,7 @@ def playtime(id):
                 phrase = cur.execute("""SELECT Henshin FROM Kabuto WHERE key LIKE ?""",
                                      (key,)).fetchall()
             elif 89 >= choice >= 81:
-                phrase = cur.execute("""SELECT Henshin FROM Den-O WHERE key LIKE ?""",
+                phrase = cur.execute("""SELECT Henshin FROM DenO WHERE key LIKE ?""",
                                      (key,)).fetchall()
             elif 99 >= choice >= 91:
                 phrase = cur.execute("""SELECT Henshin FROM Kiva WHERE key LIKE ?""",
@@ -405,13 +419,13 @@ def playtime(id):
                 phrase = cur.execute("""SELECT Henshin FROM Decade WHERE key LIKE ?""",
                                      (key,)).fetchall()
             elif 189 >= choice >= 181:
-                phrase = cur.execute("""SELECT Henshin FROM Ex-Aid WHERE key LIKE ?""",
+                phrase = cur.execute("""SELECT Henshin FROM ExAid WHERE key LIKE ?""",
                                      (key,)).fetchall()
             elif 199 >= choice >= 191:
                 phrase = cur.execute("""SELECT Henshin FROM Build WHERE key LIKE ?""",
                                      (key,)).fetchall()
             elif 209 >= choice >= 201:
-                phrase = cur.execute("""SELECT Henshin FROM Zi-O WHERE key LIKE ?""",
+                phrase = cur.execute("""SELECT Henshin FROM ZiO WHERE key LIKE ?""",
                                      (key,)).fetchall()
             ph = random.choice(phrase)[0].split('\n')
             ph.remove(ph[0])
@@ -428,6 +442,7 @@ def playtime(id):
                 print('Новое сообщение:')
                 print('Для меня от:', event.obj.message['from_id'])
                 print('Текст:', event.obj.message['text'])
+                COUNT += 1
                 a = event.obj.message['text']
                 if guess:
                     if a.lower() == randrider.lower():
